@@ -44,7 +44,7 @@ func main() {
 ```
 
 ## License
-The source code for go-ppm is released under the MIT License. See LICENSE for more details.
+The source code for go-soundcloud is released under the MIT License. See LICENSE for more details.
 
 ## Donations
 All donations are appreciated and helps me stay awake at night to work on this more. Even if it's not much, it helps a lot in the long run!
