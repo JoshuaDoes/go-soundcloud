@@ -23,6 +23,10 @@ type Track struct {
 }
 
 func (c *Client) GetTrackInfo(url string) (*Track, error) {
+	if c.ClientID == "" {
+		return nil, errors.New("Client ID required")
+	}
+
 	request, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -78,9 +82,18 @@ func (c *Client) GetTrackInfo(url string) (*Track, error) {
 		return nil, err
 	}
 	defer result.Body.Close()
+
+	if result.StatusCode == 401 {
+		return nil, errors.New("Invalid or expired client ID")
+	}
+
 	buffer = new(bytes.Buffer)
 	buffer.ReadFrom(result.Body)
 	downloadData := buffer.String()
+
+	if downloadData == "" {
+		return nil, errors.New("Error finding download metadata")
+	}
 
 	regex = regexp.MustCompile("(?s)\"url\":\"(.*?)\"")
 	mp3128URL := regex.FindStringSubmatch(downloadData)
