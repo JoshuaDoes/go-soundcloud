@@ -11,7 +11,6 @@ import (
 
 type Client struct {
 	ClientID string
-	AppVersion string
 }
 
 type Track struct {
@@ -62,11 +61,17 @@ func (c *Client) GetTrackInfo(url string) (*Track, error) {
 		return nil, errors.New("Error finding artwork URL")
 	}
 
-	url = fmt.Sprintf("https://api.soundcloud.com/i1/tracks/%s/streams?client_id=%s&app_version=%s", track[1], c.ClientID, c.AppVersion)
+	regex = regexp.MustCompile("https://api-v2\\.soundcloud\\.com/media/soundcloud:tracks:(?:\\d*)/([[:alnum:]-]*)/stream/progressive")
+	identifier := regex.FindStringSubmatch(html)
+	if len(identifier) <= 0 {
+		return nil, errors.New("Error finding identifier")
+	}
+
+	url = fmt.Sprintf("https://api-v2.soundcloud.com/media/soundcloud:tracks:%s/%s/stream/progressive?client_id=%s", track[1], identifier[1], c.ClientID)
 	if len(secret) > 0 {
 		url += "&secret_token=" + secret[1]
 	}
-	
+
 	data := &Track{}
 	result, err := http.Get(url)
 	if err != nil {
@@ -77,7 +82,7 @@ func (c *Client) GetTrackInfo(url string) (*Track, error) {
 	buffer.ReadFrom(result.Body)
 	downloadData := buffer.String()
 
-	regex = regexp.MustCompile("(?s)\"http_mp3_128_url\":\"(.*?)\"")
+	regex = regexp.MustCompile("(?s)\"url\":\"(.*?)\"")
 	mp3128URL := regex.FindStringSubmatch(downloadData)
 	if len(mp3128URL) <= 0 {
 		return nil, errors.New("Error finding download URL")
@@ -90,6 +95,6 @@ func (c *Client) GetTrackInfo(url string) (*Track, error) {
 	data.DownloadURL = downloadURL
 	data.Title = title[1]
 	data.Track = track[1]
-	
+
 	return data, err
 }
